@@ -105,12 +105,15 @@ class ConvDimensionalityReductionBlockResnet(nn.Module):
         out = self.layer_dict['conv_1'].forward(out)
         out = F.leaky_relu(out)
 
-        # Downsampling the input so we can add it to the output
-        downsample = nn.Conv2d(x.shape[1], out.shape[1], kernel_size=1, stride=2)
-        downsampled_x = downsample(x)
-        
+         # Downsampling the input so we can add it to the output
+        self.layer_dict['downsample'] = nn.Conv2d(in_channels=x.shape[1], out_channels=out.shape[1], bias=self.bias,
+                                                  kernel_size=self.kernel_size, dilation=self.dilation,
+                                                  padding=self.padding, stride=2)
+        downsampled_x = self.layer_dict['downsample'].forward(x)
+
         out += downsampled_x
-        out = F.leaky_relu(out) 
+        out = F.leaky_relu(out)
+
         
         print(out.shape)
 
@@ -126,11 +129,9 @@ class ConvDimensionalityReductionBlockResnet(nn.Module):
         out = F.leaky_relu(out)
 
         # Downsampling the input so we can add it to the output
-        downsample = nn.Conv2d(x.shape[1], out.shape[1], kernel_size=1, stride=2)
-        downsampled_x = downsample(x)
-        
+        downsampled_x = self.layer_dict['downsample'].forward(x)
         out += downsampled_x
-        out = F.leaky_relu(out) 
+        out = F.leaky_relu(out):q
         
         return out
     
@@ -154,6 +155,7 @@ class ConvProcessingBlockBNNetwork(nn.Module):
 
     def build_module(self):
         self.layer_dict = nn.ModuleDict()
+        # Do I need to make another dictionary for the batch norms?
         x = torch.zeros(self.input_shape)
         out = x
 
@@ -163,14 +165,21 @@ class ConvProcessingBlockBNNetwork(nn.Module):
 
         out = self.layer_dict['conv_0'].forward(out)
         out = F.leaky_relu(out)
+        
+        self.layer_dict['batch_norm1'] = nn.BatchNorm2d(out) # Added. Does it need to take the same args as conv2d?
+        out = self.layer_dict['batch_norm1'].forward(out)# Added.
 
         self.layer_dict['conv_1'] = nn.Conv2d(in_channels=out.shape[1], out_channels=self.num_filters, bias=self.bias,
                                               kernel_size=self.kernel_size, dilation=self.dilation,
                                               padding=self.padding, stride=1)
 
         out = self.layer_dict['conv_1'].forward(out)
-        out = F.leaky_relu(out)
-
+        out = F.leaky_relu(out)    
+        
+        self.layer_dict['batch_norm2'] = nn.BatchNorm2d(out) # Added. Does it need to take the same args as conv2d?
+        out = self.layer_dict['batch_norm2'].forward(out)# Added.
+        
+        
         print(out.shape)
 
     def forward(self, x):
@@ -178,9 +187,11 @@ class ConvProcessingBlockBNNetwork(nn.Module):
 
         out = self.layer_dict['conv_0'].forward(out)
         out = F.leaky_relu(out)
+        out = self.layer_dict['batch_norm1'].forward(out) # Added.
 
         out = self.layer_dict['conv_1'].forward(out)
         out = F.leaky_relu(out)
+        out = self.layer_dict['batch_norm2'].forward(out) # Added.
 
         return out
 
@@ -219,8 +230,14 @@ class ConvDimensionalityReductionBlockBNNetwork(nn.Module):
         out = self.layer_dict['conv_0'].forward(out)
         out = F.leaky_relu(out)
 
-        out = F.avg_pool2d(out, self.reduction_factor)
+        self.layer_dict['maxpool1'] = nn.MaxPool2d(kernel_size=self.kernel_size, stride=2, padding=self.padding) # Added. Does it need to take the same args as conv2d?
+        out = self.layer_dict['maxpool1'].forward(out) # Added. Does it need to take the same args as conv2d?
+        
+        #out = F.avg_pool2d(out, self.reduction_factor) # Can this be replaced with above? Or do we need this self.reduction_factor?
 
+        self.layer_dict['drop'] = nn.Dropout(0.2) # Added. Is this value correct? Does it need to take the same args as conv2d?
+        out = self.layer_dict['drop'].forward(out) # Use dropout to randomly set zeros to improve generaisation
+        
         self.layer_dict['conv_1'] = nn.Conv2d(in_channels=out.shape[1], out_channels=self.num_filters, bias=self.bias,
                                               kernel_size=self.kernel_size, dilation=self.dilation,
                                               padding=self.padding, stride=1)
@@ -236,9 +253,11 @@ class ConvDimensionalityReductionBlockBNNetwork(nn.Module):
         out = self.layer_dict['conv_0'].forward(out)
         out = F.leaky_relu(out)
 
-        out = F.avg_pool2d(out, self.reduction_factor)
-
-        out = self.layer_dict['conv_1'].forward(out)
-        out = F.leaky_relu(out)
+        out = self.layer_dict['maxpool1'].forward(out)
+        #out = F.avg_pool2d(out, self.reduction_factor)
+        out = self.layer_dict['drop'].forward(out)
+        
+        out = self.layer_dict['conv_1'].forward(out) # Still need these two layers?
+        out = F.leaky_relu(out) # Still need these two layers?
 
         return out
