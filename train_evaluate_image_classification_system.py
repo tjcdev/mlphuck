@@ -29,13 +29,13 @@ transform_test = transforms.Compose([
 ])
 '''End'''
 
-train_data = data_providers.CIFAR100(root='data', set_name='train',
+train_data = data_providers.CIFAR100(root='data', set_name='train', shuffle=True,
                  transform=transform_train,
                  download=True)  # initialize our rngs using the argument set seed
-val_data = data_providers.CIFAR100(root='data', set_name='val',
+val_data = data_providers.CIFAR100(root='data', set_name='val', shuffle=True,
                  transform=transform_test,
                  download=True)  # initialize our rngs using the argument set seed
-test_data = data_providers.CIFAR100(root='data', set_name='test',
+test_data = data_providers.CIFAR100(root='data', set_name='test', shuffle=True,
                  transform=transform_test,
                  download=True)  # initialize our rngs using the argument set seed
 
