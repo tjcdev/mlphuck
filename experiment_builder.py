@@ -155,13 +155,12 @@ class ExperimentBuilder(nn.Module):
         
         self.optimizer.step()  # update network parameters
 
-        print(loss)
-
-        # Resnet scheduler
-        self.learning_rate_scheduler.step(loss)
-
         _, predicted = torch.max(out.data, 1)  # get argmax of predictions
         accuracy = np.mean(list(predicted.eq(y.data).cpu()))  # compute accuracy
+
+        # Resnet scheduler
+        self.learning_rate_scheduler.step(accuracy)
+
         return loss.cpu().data.numpy(), accuracy
 
     def run_evaluation_iter(self, x, y):
