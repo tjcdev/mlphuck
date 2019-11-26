@@ -70,11 +70,27 @@ class ExperimentBuilder(nn.Module):
         print('Total number of conv layers', num_conv_layers)
         print('Total number of linear layers', num_linear_layers)
 
-        self.optimizer = optim.Adam(self.parameters(), amsgrad=False,
-                                    weight_decay=weight_decay_coefficient)
-        self.learning_rate_scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer,
-                                                                            T_max=num_epochs,
-                                                                            eta_min=0.00002)
+        
+        # ResNet implementation
+        # SDG _TODO - update this to pytorch SDG
+        self.optimizer = optim.SGD(self.parameters(), lr = 0.1,
+                                   momentum = 0.9, weight_decay=weight_decay_coefficient)
+        
+        self.learning_rate_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+                                                                            factor=0.01,
+                                                                            min_lr=0.00001)    
+        
+        
+        # Batch Normalisation implementation
+        #self.optimizer = optim.Adam(self.parameters(), amsgrad=False,
+                                    #weight_decay=weight_decay_coefficient)
+
+        #self.learning_rate_scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer,
+                                                                            #T_max=num_epochs,
+                                                                            #eta_min=0.00002)
+        
+        # Batch Normalisation implementation TBD
+        
         # Generate the directory names
         self.experiment_folder = os.path.abspath(experiment_name)
         self.experiment_logs = os.path.abspath(os.path.join(self.experiment_folder, "result_outputs"))
