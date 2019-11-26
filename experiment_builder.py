@@ -78,7 +78,8 @@ class ExperimentBuilder(nn.Module):
         
         self.learning_rate_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
                                                                             factor=0.01,
-                                                                            min_lr=0.00001)    
+                                                                            min_lr=0.00001,
+                                                                            patience=0)    
         
         
         # Batch Normalisation implementation
@@ -144,7 +145,6 @@ class ExperimentBuilder(nn.Module):
             device=self.device)  # send data to device as torch tensors
         out = self.model.forward(x)  # forward the data in the model
 
-
         loss = F.cross_entropy(input=out, target=y)  # compute loss
 
         self.optimizer.zero_grad()  # set all weight grads from previous training iters to 0
@@ -153,10 +153,13 @@ class ExperimentBuilder(nn.Module):
         # Cosine Annealing Scheduler
         #self.learning_rate_scheduler.step(epoch=self.current_epoch)
         
+        self.optimizer.step()  # update network parameters
+
+        print(loss)
+
         # Resnet scheduler
         self.learning_rate_scheduler.step(loss)
-        
-        self.optimizer.step()  # update network parameters
+
         _, predicted = torch.max(out.data, 1)  # get argmax of predictions
         accuracy = np.mean(list(predicted.eq(y.data).cpu()))  # compute accuracy
         return loss.cpu().data.numpy(), accuracy
