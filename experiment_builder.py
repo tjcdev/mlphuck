@@ -76,7 +76,7 @@ class ExperimentBuilder(nn.Module):
         self.optimizer = optim.SGD(self.parameters(), lr = 0.1,
                                    momentum = 0.9, weight_decay=weight_decay_coefficient)
         
-        self.learning_rate_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+        # self.learning_rate_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
                                                                             factor=0.01,
                                                                             min_lr=0.00001,
                                                                             patience=0)    
@@ -86,9 +86,9 @@ class ExperimentBuilder(nn.Module):
         #self.optimizer = optim.Adam(self.parameters(), amsgrad=False,
                                     #weight_decay=weight_decay_coefficient)
 
-        #self.learning_rate_scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer,
-                                                                            #T_max=num_epochs,
-                                                                            #eta_min=0.00002)
+        self.learning_rate_scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer,
+                                                                            T_max=num_epochs,
+                                                                            eta_min=0.00002)
         
         # Batch Normalisation implementation TBD
         
@@ -151,7 +151,7 @@ class ExperimentBuilder(nn.Module):
         loss.backward()  # backpropagate to compute gradients for current iter loss
 
         # Cosine Annealing Scheduler
-        #self.learning_rate_scheduler.step(epoch=self.current_epoch)
+        self.learning_rate_scheduler.step(epoch=self.current_epoch)
         
         self.optimizer.step()  # update network parameters
 
@@ -159,7 +159,7 @@ class ExperimentBuilder(nn.Module):
         accuracy = np.mean(list(predicted.eq(y.data).cpu()))  # compute accuracy
 
         # Resnet scheduler
-        self.learning_rate_scheduler.step(accuracy)
+        #self.learning_rate_scheduler.step(accuracy)
 
         return loss.cpu().data.numpy(), accuracy
 
